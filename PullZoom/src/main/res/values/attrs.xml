@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="PullZoomLayout">
+        <attr name="damp" format="float" />
+        <attr name="image_res" format="reference" />
+        <attr name="image_height" format="dimension" />
+        <attr name="refresh_enable" format="boolean" />
+        <attr name="scale_type" format="enum">
+            <enum name="center_crop" value="1" />
+            <enum name="fit_center" value="3" />
+            <enum name="fit_XY" value="6" />
+        </attr>
+    </declare-styleable>
+</resources>
