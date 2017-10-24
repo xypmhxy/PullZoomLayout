@@ -1,11 +1,15 @@
 package com.ren.pullzoomsimple;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.ren.pullzoom.widget.PullZoomLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,9 +21,21 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-//        ImageView imageView = (ImageView) findViewById(R.id.image_);
+        final PullZoomLayout pullLayout = (PullZoomLayout) findViewById(R.id.pull);
+        pullLayout.setOnRefreshListener(new PullZoomLayout.onRefreshListener() {
+            @Override
+            public void onRefresh() {
+                Log.e("rq", "刷新回调开始 ");
+                Handler handler=new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        pullLayout.refreshComplete();
+                    }
+                },2000);
+            }
+        });
         ListView listView = (ListView) findViewById(R.id.listview);
-//        listView.setPullZoomView(imageView, true);
         List<String> list = new ArrayList<>();
         for (int i = 0; i < 30; i++) {
             list.add(i + "条数据");
@@ -32,6 +48,5 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, ad.getItem(position), Toast.LENGTH_SHORT).show();
             }
         });
-//        listView.setPullZoomView(linearLayout);
     }
 }

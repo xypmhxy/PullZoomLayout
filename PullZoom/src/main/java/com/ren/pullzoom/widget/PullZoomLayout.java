@@ -12,6 +12,7 @@ import android.widget.AbsListView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 
 import com.ren.pullzoom.R;
 
@@ -23,19 +24,24 @@ import com.ren.pullzoom.R;
 public class PullZoomLayout extends LinearLayout {
 
     private ImageView pullZoomImage;
+    private ImageView refreshProgress;
     private ListView listView;
     private float pressY;
     private boolean canZoom;
+    private boolean needRefresh;
+    private int refrshSlop = 300;
     private ViewGroup.LayoutParams originalParams;
+    private ValueAnimator rotationAnimator;
 
     private float damp;
     private int imageRes;
     private int imageHeight;
     private int scaleType;
+    private boolean refreshEnable;
 
     public PullZoomLayout(Context context) {
         super(context);
-        init();
+        init(context);
     }
 
     public PullZoomLayout(Context context, AttributeSet attrs) {
@@ -50,11 +56,21 @@ public class PullZoomLayout extends LinearLayout {
 
     private void init(Context context, AttributeSet attrs) {
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.PullZoomLayout);
-        damp = ta.getFloat(R.styleable.PullZoomLayout_damp, 2.0f);
+        damp = ta.getFloat(R.styleable.PullZoomLayout_damp, 3.0f);
         imageRes = ta.getResourceId(R.styleable.PullZoomLayout_image_res, 0);
         imageHeight = ta.getDimensionPixelSize(R.styleable.PullZoomLayout_image_height, dip2px(context, 210));
         scaleType = ta.getInt(R.styleable.PullZoomLayout_scale_type, -1);
+        refreshEnable = ta.getBoolean(R.styleable.PullZoomLayout_refresh_enable, false);
         ta.recycle();
+        refrshSlop = context.getResources().getDisplayMetrics().heightPixels / 5;
+        Log.e("rq", "refrshSlop " + refrshSlop);
+        init(context);
+    }
+
+    private void init(Context context) {
+        RelativeLayout head = new RelativeLayout(context);
+        ViewGroup.LayoutParams headParams = new ViewGroup.LayoutParams(-1, -2);
+        head.setLayoutParams(headParams);
 
         pullZoomImage = new ImageView(context);
         switch (scaleType) {
@@ -68,15 +84,21 @@ public class PullZoomLayout extends LinearLayout {
                 pullZoomImage.setScaleType(ImageView.ScaleType.FIT_XY);
                 break;
         }
-        init();
-    }
-
-    private void init() {
         pullZoomImage.setImageResource(imageRes);
         originalParams = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, imageHeight);
-        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(originalParams);
-        pullZoomImage.setLayoutParams(params);
-        addView(pullZoomImage, 0);
+//        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(originalParams);
+        pullZoomImage.setLayoutParams(originalParams);
+        head.addView(pullZoomImage);
+
+        refreshProgress = new ImageView(context);
+        refreshProgress.setVisibility(GONE);
+        refreshProgress.setImageResource(R.drawable.refresh);
+        RelativeLayout.LayoutParams refreshParams = new RelativeLayout.LayoutParams(dip2px(context, 35), dip2px(context, 35));
+        refreshParams.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
+        refreshProgress.setLayoutParams(refreshParams);
+        head.addView(refreshProgress);
+
+        addView(head, 0);
     }
 
     @Override
@@ -104,6 +126,7 @@ public class PullZoomLayout extends LinearLayout {
         public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
         }
     };
+
     OnTouchListener touchListener = new OnTouchListener() {
         @Override
         public boolean onTouch(View v, MotionEvent ev) {
@@ -118,10 +141,15 @@ public class PullZoomLayout extends LinearLayout {
                     break;
                 case MotionEvent.ACTION_CANCEL:
                 case MotionEvent.ACTION_UP:
-                    if (canZoom) {
+                    if (canZoom)
                         restroe();
-                        canZoom = false;
-                    }
+                    if (needRefresh && refreshListener != null) {
+                        refreshListener.onRefresh();
+                        rotationProgress();
+                    } else
+                        refreshProgress.setVisibility(GONE);
+                    needRefresh = false;
+                    canZoom = false;
                     break;
 
             }
@@ -133,10 +161,16 @@ public class PullZoomLayout extends LinearLayout {
         float offY = ev.getY() - pressY;
         if (offY <= 0 || offY < 16)
             return false;
+        if (refreshEnable) {
+            needRefresh = offY >= refrshSlop;
+            if (needRefresh)
+                refreshProgress.setVisibility(VISIBLE);
+        }
         ViewGroup.LayoutParams params = pullZoomImage.getLayoutParams();
         float height = originalParams.height + offY / damp;
         params.height = (int) height;
         scaleImage(height);
+        rotationProgress(offY);
         if (params.height >= originalParams.height)
             pullZoomImage.setLayoutParams(params);
         return true;
@@ -148,6 +182,10 @@ public class PullZoomLayout extends LinearLayout {
         float scale = (height - originalParams.height) / originalParams.height;
         pullZoomImage.setScaleX(1 + scale);
         pullZoomImage.setScaleY(1 + scale);
+    }
+
+    private void rotationProgress(float offy) {
+        refreshProgress.setRotation(offy / 2);
     }
 
     private void restroe() {
@@ -168,6 +206,33 @@ public class PullZoomLayout extends LinearLayout {
         animator.start();// 开启动画
     }
 
+
+    private void rotationProgress() {
+        rotationAnimator = ValueAnimator.ofFloat(0, 720);// 动画更新的监听
+        rotationAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+            @Override
+            public void onAnimationUpdate(ValueAnimator arg0) {
+                float angel = (float) arg0.getAnimatedValue();// 获取动画当前变化的值
+                // 根据最新高度,更新布局高度
+                rotationProgress(angel);
+            }
+        });
+        rotationAnimator.setDuration(1000);// 动画时间
+        rotationAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        rotationAnimator.start();// 开启动画
+    }
+
+    private ImageView getImageView() {
+        return pullZoomImage;
+    }
+
+    public void refreshComplete() {
+        if (rotationAnimator.isRunning())
+            rotationAnimator.end();
+        refreshProgress.setVisibility(GONE);
+    }
+
     /**
      * 根据手机的分辨率从 dp 的单位 转成为 px(像素)
      */
@@ -176,7 +241,13 @@ public class PullZoomLayout extends LinearLayout {
         return (int) (dpValue * scale + 0.5f);
     }
 
-    private ImageView getImageView() {
-        return pullZoomImage;
+    public interface onRefreshListener {
+        void onRefresh();
+    }
+
+    private onRefreshListener refreshListener;
+
+    public void setOnRefreshListener(onRefreshListener listener) {
+        this.refreshListener = listener;
     }
 }

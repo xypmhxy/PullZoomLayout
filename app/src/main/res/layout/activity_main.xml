@@ -9,11 +9,13 @@
     tools:context=".MainActivity">
 
     <com.ren.pullzoom.widget.PullZoomLayout
+        android:id="@+id/pull"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
         app:image_height="200dp"
         app:image_res="@mipmap/timg"
+        app:refresh_enable="true"
         app:scale_type="center_crop">
 
         <ListView
