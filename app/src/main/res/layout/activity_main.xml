@@ -8,21 +8,16 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <com.ren.pullzoom.widget.PullZoomLayout
-        android:id="@+id/pull"
+    <Button
+        android:id="@+id/pull_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        app:image_height="200dp"
-        app:image_res="@mipmap/timg"
-        app:refresh_enable="true"
-        app:scale_type="center_crop">
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:text="@string/pull_list" />
 
-        <ListView
-            android:id="@+id/listview"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@android:color/white" />
-
-    </com.ren.pullzoom.widget.PullZoomLayout>
+    <Button
+        android:id="@+id/pull_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/pull_scroll" />
 </LinearLayout>

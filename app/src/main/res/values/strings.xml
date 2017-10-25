@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">PullZoomSimple</string>
+    <string name="pull_list">ListView下拉放大</string>
+    <string name="pull_scroll">ScrollView下拉放大</string>
 </resources>

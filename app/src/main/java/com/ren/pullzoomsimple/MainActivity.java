@@ -1,53 +1,43 @@
 package com.ren.pullzoomsimple;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.ren.pullzoom.widget.PullZoomLayout;
+import com.ren.pullzoom.widget.PullZoomScrollView;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        final PullZoomLayout pullLayout = (PullZoomLayout) findViewById(R.id.pull);
-        pullLayout.setOnRefreshListener(new PullZoomLayout.onRefreshListener() {
-            @Override
-            public void onRefresh() {
-                Log.e("rq", "刷新回调开始 ");
-                Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        pullLayout.refreshComplete();
-                        Toast.makeText(MainActivity.this, "刷新完成", Toast.LENGTH_SHORT).show();
-                    }
-                }, 2000);
-            }
-        });
-        ListView listView = (ListView) findViewById(R.id.listview);
-        List<String> list = new ArrayList<>();
-        for (int i = 0; i < 30; i++) {
-            list.add(i + "条数据");
+        Button pullList = (Button) findViewById(R.id.pull_list);
+        Button pullScroll = (Button) findViewById(R.id.pull_scroll);
+        pullList.setOnClickListener(this);
+        pullScroll.setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.pull_list) {
+            Intent intent = new Intent(this, PullListViewActivity.class);
+            startActivity(intent);
+        } else if (v.getId() == R.id.pull_scroll) {
+            Intent intent = new Intent(this, ScrollViewActivity.class);
+            startActivity(intent);
         }
-        final MyAdapter ad = new MyAdapter(list, this);
-        listView.setAdapter(ad);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(MainActivity.this, ad.getItem(position), Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 }
