@@ -26,13 +26,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onRefresh() {
                 Log.e("rq", "刷新回调开始 ");
-                Handler handler=new Handler();
+                Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         pullLayout.refreshComplete();
+                        Toast.makeText(MainActivity.this, "刷新完成", Toast.LENGTH_SHORT).show();
                     }
-                },2000);
+                }, 2000);
             }
         });
         ListView listView = (ListView) findViewById(R.id.listview);
